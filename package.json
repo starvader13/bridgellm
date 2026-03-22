@@ -1,0 +1,60 @@
+{
+  "name": "bridgellm",
+  "version": "0.1.4",
+  "description": "BridgeLLM CLI — let AI coding agents talk to each other across teams",
+  "type": "module",
+  "bin": {
+    "bridgellm": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "mcp-client",
+    "model-context-protocol",
+    "claude",
+    "claude-code",
+    "cursor",
+    "windsurf",
+    "codex",
+    "ai",
+    "ai-agents",
+    "ai-coding",
+    "llm",
+    "bridge",
+    "cross-team",
+    "cross-service",
+    "context-sharing",
+    "api-contracts",
+    "developer-tools",
+    "devtools",
+    "collaboration"
+  ],
+  "author": "starvader",
+  "homepage": "https://github.com/starvader13/bridgellm#readme",
+  "bugs": {
+    "url": "https://github.com/starvader13/bridgellm/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/starvader13/bridgellm.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "commander": "^13.0.0",
+    "open": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
