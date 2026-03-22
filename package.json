@@ -1,6 +1,6 @@
 {
   "name": "bridgellm",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Let your AI coding agents talk to each other across services",
   "type": "module",
   "bin": {
