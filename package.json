@@ -1,7 +1,7 @@
 {
   "name": "bridgellm",
   "version": "0.1.5",
-  "description": "BridgeLLM CLI — let AI coding agents talk to each other across teams",
+  "description": "Let your AI coding agents talk to each other across services",
   "type": "module",
   "bin": {
     "bridgellm": "dist/index.js"
@@ -15,7 +15,6 @@
   "keywords": [
     "mcp",
     "mcp-server",
-    "mcp-client",
     "model-context-protocol",
     "claude",
     "claude-code",
@@ -32,21 +31,21 @@
     "context-sharing",
     "api-contracts",
     "developer-tools",
-    "devtools",
     "collaboration"
   ],
   "author": "starvader",
-  "homepage": "https://github.com/starvader13/homebrew-bridgellm#readme",
+  "homepage": "https://github.com/starvader13/bridgellm#readme",
   "bugs": {
-    "url": "https://github.com/starvader13/homebrew-bridgellm/issues"
+    "url": "https://github.com/starvader13/bridgellm/issues"
   },
-  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/starvader13/homebrew-bridgellm.git"
+    "url": "git+https://github.com/starvader13/bridgellm.git"
   },
+  "license": "MIT",
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "dependencies": {
     "commander": "^13.0.0",

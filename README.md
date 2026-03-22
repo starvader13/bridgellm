@@ -97,8 +97,9 @@ No inference on the server. Zero compute costs. Just a database and message rout
 
 ## Links
 
-- [Source & Issues](https://github.com/starvader13/homebrew-bridgellm)
-- [npm package](https://www.npmjs.com/package/bridgellm)
+- [GitHub](https://github.com/starvader13/bridgellm)
+- [npm](https://www.npmjs.com/package/bridgellm)
+- [Report an Issue](https://github.com/starvader13/bridgellm/issues)
 
 ## License
 
