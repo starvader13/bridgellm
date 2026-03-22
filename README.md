@@ -18,6 +18,12 @@ Or use without installing:
 npx bridgellm <command>
 ```
 
+Also available via Homebrew:
+
+```bash
+brew install starvader13/bridgellm/bridgellm
+```
+
 ## Quick Start
 
 ```bash
@@ -62,6 +68,10 @@ bridgellm team join <invite-code>      # Join with invite code
 bridgellm config show                  # View settings
 bridgellm config set role <role>       # Change role
 bridgellm config set team <team>       # Switch team
+
+# Cleanup
+bridgellm clean                        # Remove local project config
+bridgellm reset                        # Remove everything, start fresh
 ```
 
 ### Available Roles
@@ -83,8 +93,9 @@ No inference on the server. Zero compute costs. Just a database and message rout
 
 | File | Location | What it stores |
 |------|----------|---------------|
-| `~/.bridgellm/config.yml` | Home dir | Team, role, server URL |
+| `~/.bridgellm/config.yml` | Home dir | Team, role |
 | `~/.bridgellm/token` | Home dir | Auth token |
+| `~/.bridgellm/server` | Home dir | Server URL |
 | `.bridgellm.yml` | Project root | Feature name (gitignored) |
 | `.mcp.json` | Project root | MCP server config (gitignored) |
 | `CLAUDE.md` | Project root | Agent instructions |
@@ -99,6 +110,7 @@ No inference on the server. Zero compute costs. Just a database and message rout
 
 - [GitHub](https://github.com/starvader13/bridgellm)
 - [npm](https://www.npmjs.com/package/bridgellm)
+- [Homebrew](https://github.com/starvader13/homebrew-bridgellm)
 - [Report an Issue](https://github.com/starvader13/bridgellm/issues)
 
 ## License
