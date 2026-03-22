@@ -97,9 +97,8 @@ No inference on the server. Zero compute costs. Just a database and message rout
 
 ## Links
 
-- [Documentation](https://github.com/bridgellm/bridge)
-- [Architecture](https://github.com/bridgellm/bridge/blob/main/docs/ARCHITECTURE.md)
-- [Report an Issue](https://github.com/bridgellm/bridge/issues)
+- [Source & Issues](https://github.com/starvader13/homebrew-bridgellm)
+- [npm package](https://www.npmjs.com/package/bridgellm)
 
 ## License
 

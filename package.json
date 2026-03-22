@@ -36,14 +36,14 @@
     "collaboration"
   ],
   "author": "starvader",
-  "homepage": "https://github.com/starvader13/bridgellm#readme",
+  "homepage": "https://github.com/starvader13/homebrew-bridgellm#readme",
   "bugs": {
-    "url": "https://github.com/starvader13/bridgellm/issues"
+    "url": "https://github.com/starvader13/homebrew-bridgellm/issues"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/starvader13/bridgellm.git"
+    "url": "git+https://github.com/starvader13/homebrew-bridgellm.git"
   },
   "files": [
     "dist"
