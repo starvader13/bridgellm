@@ -2,6 +2,10 @@ import http from 'node:http';
 import { saveToken, saveServerUrl, saveGlobalConfig, getGlobalConfig } from '../config.js';
 import { heading, info, success, warn, ask, select, selectRole, summary } from '../ui.js';
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 export async function login(serverUrl: string): Promise<void> {
   const server = http.createServer();
 
@@ -47,7 +51,7 @@ export async function login(serverUrl: string): Promise<void> {
           res.writeHead(200, { 'Content-Type': 'text/html' });
           res.end(`
             <html><body style="font-family: system-ui; padding: 2em; text-align: center;">
-              <h2>Logged in as ${name ?? 'unknown'}</h2>
+              <h2>Logged in as ${escapeHtml(name ?? 'unknown')}</h2>
               <p>You can close this tab and return to the terminal.</p>
             </body></html>
           `);
