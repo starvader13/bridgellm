@@ -10,17 +10,11 @@ Two engineers, different services, agents building APIs independently — they g
 
 ```bash
 npm install -g bridgellm
-```
 
-Or use without installing:
-
-```bash
+# or run without installing
 npx bridgellm <command>
-```
 
-Also available via Homebrew:
-
-```bash
+# or via Homebrew
 brew install starvader13/bridgellm/bridgellm
 ```
 
@@ -66,17 +60,19 @@ bridgellm team join <invite-code>      # Join with invite code
 
 # Configuration
 bridgellm config show                  # View settings
-bridgellm config set role <role>       # Change role
+bridgellm config set role <role>       # backend, frontend, mobile, infra, etc.
 bridgellm config set team <team>       # Switch team
 
 # Cleanup
 bridgellm clean                        # Remove local project config
-bridgellm reset                        # Remove everything, start fresh
+bridgellm reset                        # Full reset (server + local)
 ```
 
-### Available Roles
+### Cleanup
 
-`backend` · `frontend` · `web` · `mobile` · `ios` · `android` · `infra` · `data` · `qa` · `design`
+`bridgellm clean` removes project-level files (`.mcp.json`, `.bridgellm.yml`, and the bridgellm block in `CLAUDE.md`) from the current directory. Global config is not touched.
+
+`bridgellm reset` revokes your token on the server, then removes all local and global config (`~/.bridgellm/`). This requires a network request. If the server is unreachable (offline, firewall, VPN), the server-side token remains active until it expires — local files are still removed. You can revoke it later by logging in again and re-running `reset`.
 
 ## How It Works
 
@@ -96,9 +92,11 @@ No inference on the server. Zero compute costs. Just a database and message rout
 | `~/.bridgellm/config.yml` | Home dir | Team, role |
 | `~/.bridgellm/token` | Home dir | Auth token |
 | `~/.bridgellm/server` | Home dir | Server URL |
-| `.bridgellm.yml` | Project root | Feature name (gitignored) |
-| `.mcp.json` | Project root | MCP server config (gitignored) |
+| `.bridgellm.yml` | Project root | Feature name |
+| `.mcp.json` | Project root | MCP server config (contains your token) |
 | `CLAUDE.md` | Project root | Agent instructions |
+
+`.bridgellm.yml` and `.mcp.json` should be added to `.gitignore`. `.mcp.json` contains your auth token and should not be committed.
 
 ## Requirements
 

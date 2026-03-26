@@ -162,6 +162,23 @@ export async function clean(cwd: string): Promise<void> {
 // ── Reset (local + global) ──
 
 export async function reset(cwd: string): Promise<void> {
+  // Revoke token on the server before deleting locally
+  try {
+    const token = await getToken();
+    const serverUrl = await getServerUrl();
+    const res = await fetch(`${serverUrl}/api/tokens`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      console.log('  Token revoked on server.');
+    } else {
+      console.log('  Could not revoke token on server (may already be expired).');
+    }
+  } catch {
+    console.log('  Could not reach server to revoke token. Continuing with local cleanup.');
+  }
+
   // Clean local first
   await clean(cwd);
 
