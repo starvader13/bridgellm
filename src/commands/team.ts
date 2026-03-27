@@ -1,4 +1,5 @@
 import { getToken, getServerUrl, getGlobalConfig, saveGlobalConfig } from '../config.js';
+import { success, info } from '../ui.js';
 
 export async function createTeam(name: string): Promise<void> {
   const token = await getToken();
@@ -16,19 +17,17 @@ export async function createTeam(name: string): Promise<void> {
   const data = await res.json();
 
   if (!res.ok) {
-    console.error(`Error: ${(data as { error: string }).error}`);
-    process.exit(1);
+    throw new Error((data as { error: string }).error);
   }
 
   const result = data as { team: { name: string }; invite_code: string };
 
-  // Update global config
   const global = await getGlobalConfig();
   await saveGlobalConfig({ ...global, team: result.team.name });
 
-  console.log(`Team "${result.team.name}" created!`);
-  console.log(`Invite code: ${result.invite_code}`);
-  console.log(`Share this code so others can join: bridgellm team join ${result.invite_code}`);
+  success(`Team "${result.team.name}" created`);
+  info(`Invite code: ${result.invite_code}`);
+  info('Share this code so teammates can join.');
 }
 
 export async function joinTeam(inviteCode: string): Promise<void> {
@@ -47,15 +46,13 @@ export async function joinTeam(inviteCode: string): Promise<void> {
   const data = await res.json();
 
   if (!res.ok) {
-    console.error(`Error: ${(data as { error: string }).error}`);
-    process.exit(1);
+    throw new Error((data as { error: string }).error);
   }
 
   const result = data as { team: { name: string }; message: string };
 
-  // Update global config
   const global = await getGlobalConfig();
   await saveGlobalConfig({ ...global, team: result.team.name });
 
-  console.log(result.message);
+  success(`Joined "${result.team.name}"`);
 }

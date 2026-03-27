@@ -1,6 +1,6 @@
 import http from 'node:http';
-import { saveToken, saveServerUrl, saveGlobalConfig, getGlobalConfig } from '../config.js';
-import { heading, info, success, warn, ask, select, selectRole, summary } from '../ui.js';
+import { saveToken, saveServerUrl } from '../config.js';
+import { heading, info, success } from '../ui.js';
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -28,8 +28,7 @@ export async function login(serverUrl: string): Promise<void> {
   const authUrl = `${serverUrl}/auth/github?cli_port=${port}`;
 
   heading('GitHub Authentication');
-  info('Opening browser...');
-  info(`If it doesn't open, visit:\n    ${authUrl}\n`);
+  info(`If the browser doesn't open, visit:\n    ${authUrl}\n`);
 
   const open = (await import('open')).default;
   await open(authUrl);
@@ -75,63 +74,5 @@ export async function login(serverUrl: string): Promise<void> {
   await saveToken(result.token);
   await saveServerUrl(serverUrl);
 
-  success(`Logged in as ${result.name}`);
-
-  // Check if global config already has team + role
-  const existing = await getGlobalConfig();
-  if (existing.team && existing.role) {
-    summary({ Team: existing.team, Role: existing.role });
-    info('Run `bridgellm connect` in your project directory.\n');
-    return;
-  }
-
-  // First-time setup
-  heading('First-time setup');
-  console.log('');
-
-  // Team
-  let teamName: string | undefined;
-  const meRes = await fetch(`${serverUrl}/api/me`, {
-    headers: { Authorization: `Bearer ${result.token}` },
-  });
-  const me = await meRes.json() as { team: { name: string } | null };
-
-  if (me.team) {
-    teamName = me.team.name;
-    success(`Team: ${teamName}`);
-  } else {
-    const { value, isNew } = await select('No team yet', ['Create a new team', 'Join with invite code']);
-
-    if (value === 'Create a new team') {
-      const name = await ask('Team name: ');
-      const res = await fetch(`${serverUrl}/api/teams`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${result.token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      const data = await res.json() as { team: { name: string }; invite_code: string };
-      teamName = data.team.name;
-      success(`Created "${teamName}"`);
-      info(`Invite code: ${data.invite_code}`);
-      info('Share this code so teammates can join.\n');
-    } else {
-      const code = await ask('Invite code: ');
-      const res = await fetch(`${serverUrl}/api/teams/join`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${result.token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ invite_code: code }),
-      });
-      const data = await res.json() as { team: { name: string } };
-      teamName = data.team.name;
-      success(`Joined "${teamName}"`);
-    }
-  }
-
-  // Role
-  const role = await selectRole();
-
-  await saveGlobalConfig({ team: teamName, role });
-
-  summary({ Team: teamName!, Role: role });
-  info('Run `bridgellm connect` in your project directory.\n');
+  success(`Authenticated as ${result.name}`);
 }

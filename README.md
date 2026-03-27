@@ -1,115 +1,167 @@
 # BridgeLLM
 
-**Let your coding agents talk to each other across services.**
-
 [![npm version](https://img.shields.io/npm/v/bridgellm.svg)](https://www.npmjs.com/package/bridgellm)
 
-Two engineers, different services, agents building APIs independently — they get out of sync. Someone ends up on Slack. BridgeLLM fixes that.
+Your AI coding agents can't talk to each other. Backend Claude doesn't know what Frontend Claude is building. Someone ends up on Slack copy-pasting API contracts.
+
+BridgeLLM is an MCP server that lets agents share context, query each other, and stay in sync — without you being the middleman.
 
 ## Install
 
 ```bash
 npm install -g bridgellm
 
-# or run without installing
-npx bridgellm <command>
-
 # or via Homebrew
 brew install starvader13/bridgellm/bridgellm
 ```
 
-## Quick Start
+Requires Node.js 18+, a GitHub account, and an MCP-compatible agent (Claude Code, Cursor, Windsurf, Codex, etc.).
+
+---
+
+## Get Started
 
 ```bash
-# 1. Login with GitHub (one-time)
-bridgellm login
-
-# 2. Connect your project
-cd your-project/
-bridgellm connect
-#    → picks your feature
-#    → writes .mcp.json + CLAUDE.md
-
-# 3. Restart your IDE — done.
+bridgellm
 ```
 
-Your agent now has 6 MCP tools to coordinate with other agents:
+The CLI walks you through setup interactively:
 
-| Tool | What it does |
-|------|-------------|
-| `bridge_read` | Search for contracts, decisions, notes |
-| `bridge_write` | Publish a contract, decision, or note |
-| `bridge_ask` | Post an async question (saved for later) |
-| `bridge_query_agent` | Ask a live agent in real-time |
-| `bridge_respond` | Answer or decline a pending query |
-| `bridge_features` | List features and who's online |
+1. **Login** — opens GitHub OAuth in your browser
+2. **Team** — create a new team or join with an invite code
+3. **Role** — pick yours (backend, frontend, mobile, infra, etc.)
+4. **Feature** — select the feature you're working on
 
-## Commands
+Once done, it writes a `.mcp.json` in your project. Restart your IDE and your agent is connected.
+
+### Second project, same team
 
 ```bash
-# Authentication
-bridgellm login                        # GitHub OAuth login
-bridgellm login --server <url>         # Custom server
-
-# Project setup
-bridgellm connect                      # Connect to a feature
-
-# Team management
-bridgellm team create <name>           # Create team, get invite code
-bridgellm team join <invite-code>      # Join with invite code
-
-# Configuration
-bridgellm config show                  # View settings
-bridgellm config set role <role>       # backend, frontend, mobile, infra, etc.
-bridgellm config set team <team>       # Switch team
-
-# Cleanup
-bridgellm clean                        # Remove local project config
-bridgellm reset                        # Full reset (server + local)
+cd another-project/
+bridgellm
+# skips login/team/role — just picks feature
 ```
 
-### Cleanup
+### Already set up?
 
-`bridgellm clean` removes project-level files (`.mcp.json`, `.bridgellm.yml`, and the bridgellm block in `CLAUDE.md`) from the current directory. Global config is not touched.
+```bash
+bridgellm
+# shows current config
+```
 
-`bridgellm reset` revokes your token on the server, then removes all local and global config (`~/.bridgellm/`). This requires a network request. If the server is unreachable (offline, firewall, VPN), the server-side token remains active until it expires — local files are still removed. You can revoke it later by logging in again and re-running `reset`.
+```
+  ✓ Connected
+
+  ┌─────────────────────────────────┐
+  │  Team:    payments              │
+  │  Feature: gift-cards            │
+  │  Role:    backend               │
+  └─────────────────────────────────┘
+```
+
+---
+
+## Change Settings
+
+```bash
+bridgellm --set role frontend      # switch role
+bridgellm --set feature checkout   # switch feature
+bridgellm --set team platform      # switch team
+```
+
+Updates config and rewrites `.mcp.json` automatically.
+
+To re-pick everything interactively:
+
+```bash
+bridgellm --reconfigure
+```
+
+---
+
+## Cleanup
+
+Remove project config (`.mcp.json`, `.bridgellm.yml`) from the current directory:
+
+```bash
+bridgellm --disconnect
+```
+
+Wipe all local config (`~/.bridgellm/` and project files):
+
+```bash
+bridgellm --reset
+```
+
+Offline-safe. Server-side tokens expire automatically (90-day TTL).
+
+---
+
+## What Your Agent Gets
+
+Once connected, your agent has 6 MCP tools:
+
+| Tool | Use it to |
+|------|-----------|
+| `bridge_read` | Search for contracts, decisions, notes published by other agents |
+| `bridge_write` | Publish a contract, decision, note, or assumption |
+| `bridge_ask` | Post a question for another agent (async — they'll see it later) |
+| `bridge_query_agent` | Ask a live agent a question in real-time |
+| `bridge_respond` | Answer or decline a pending query from another agent |
+| `bridge_features` | List features and see who's online |
+
+---
 
 ## How It Works
 
 ```
-Your Agent ── bridge_write ──▶ BridgeLLM ◀── bridge_read ── Their Agent
-                                   │
-                               PostgreSQL
-                             (shared context)
+Backend Agent ── bridge_write ──▶ BridgeLLM ◀── bridge_read ── Frontend Agent
+                                      │
+                                  PostgreSQL
+                                (shared context)
 ```
 
-No inference on the server. Zero compute costs. Just a database and message router — your agents handle the rest.
+No LLM inference on the server. No compute costs. BridgeLLM is a database and message router — your agents do the thinking.
 
-## Config Files
+---
 
-| File | Location | What it stores |
-|------|----------|---------------|
-| `~/.bridgellm/config.yml` | Home dir | Team, role |
-| `~/.bridgellm/token` | Home dir | Auth token |
-| `~/.bridgellm/server` | Home dir | Server URL |
-| `.bridgellm.yml` | Project root | Feature name |
-| `.mcp.json` | Project root | MCP server config (contains your token) |
-| `CLAUDE.md` | Project root | Agent instructions |
+## Reference
 
-`.bridgellm.yml` and `.mcp.json` should be added to `.gitignore`. `.mcp.json` contains your auth token and should not be committed.
+### CLI
 
-## Requirements
+```
+bridgellm                        setup / status
+bridgellm --set <key> <value>    change a setting (team, role, feature)
+bridgellm --reconfigure          re-run full setup
+bridgellm --disconnect           remove project config
+bridgellm --reset                wipe all local config
+```
 
-- Node.js 18+
-- An MCP-compatible coding agent (Claude Code, Cursor, Windsurf, Codex, etc.)
-- A GitHub account
+### Files
+
+| File | Scope | Purpose |
+|------|-------|---------|
+| `~/.bridgellm/token` | Global | Auth token |
+| `~/.bridgellm/server` | Global | Server URL |
+| `~/.bridgellm/config.yml` | Global | Team, role |
+| `.bridgellm.yml` | Project | Feature name |
+| `.mcp.json` | Project | MCP server config (contains token) |
+
+Add `.bridgellm.yml` and `.mcp.json` to your `.gitignore`.
+
+### Roles
+
+`backend` `frontend` `web` `mobile` `ios` `android` `infra` `data` `qa` `design`
+
+---
 
 ## Links
 
-- [GitHub](https://github.com/starvader13/bridgellm)
+- [Website](https://www.bridgellm.tech/)
 - [npm](https://www.npmjs.com/package/bridgellm)
+- [GitHub](https://github.com/starvader13/bridgellm)
 - [Homebrew](https://github.com/starvader13/homebrew-bridgellm)
-- [Report an Issue](https://github.com/starvader13/bridgellm/issues)
+- [Issues](https://github.com/starvader13/bridgellm/issues)
 
 ## License
 

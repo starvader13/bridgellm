@@ -1,4 +1,4 @@
-import { createInterface } from 'node:readline';
+import { createInterface, emitKeypressEvents } from 'node:readline';
 
 const DIM = '\x1b[2m';
 const BOLD = '\x1b[1m';
@@ -7,6 +7,11 @@ const CYAN = '\x1b[36m';
 const YELLOW = '\x1b[33m';
 const RED = '\x1b[31m';
 const RESET = '\x1b[0m';
+
+// Restore cursor on exit (in case of crash during selection)
+process.on('exit', () => {
+  process.stdout.write('\x1b[?25h');
+});
 
 export function heading(text: string) {
   console.log(`\n  ${BOLD}${text}${RESET}`);
@@ -43,75 +48,112 @@ export async function ask(question: string): Promise<string> {
 }
 
 /**
- * Show a numbered list and let the user pick one.
- * Returns the selected item string.
+ * Arrow-key navigable select list.
+ * Use ↑/↓ to move, Enter to confirm.
  */
 export async function select(
   label: string,
   options: string[],
-  extra?: { newLabel?: string },
+  extra?: { newLabel?: string; defaultIndex?: number },
 ): Promise<{ value: string; isNew: boolean }> {
-  heading(label);
-  console.log('');
-  options.forEach((o, i) => {
-    console.log(`  ${DIM}${i + 1}.${RESET} ${o}`);
+  const items = [...options];
+  const newIdx = extra?.newLabel ? items.length : -1;
+  if (extra?.newLabel) items.push(`+ ${extra.newLabel}`);
+
+  let selected = extra?.defaultIndex ?? 0;
+  if (selected < 0 || selected >= items.length) selected = 0;
+
+  const totalLines = items.length;
+
+  // Print label
+  if (label) {
+    heading(label);
+    console.log('');
+  }
+
+  // Initial render
+  renderItems(items, selected, newIdx);
+
+  // Hide cursor during selection
+  process.stdout.write('\x1b[?25l');
+
+  return new Promise((resolve) => {
+    emitKeypressEvents(process.stdin);
+    if (process.stdin.isTTY) process.stdin.setRawMode(true);
+    process.stdin.resume();
+
+    const onKeypress = (_str: string | undefined, key: { name: string; ctrl?: boolean }) => {
+      if (!key) return;
+
+      if (key.ctrl && key.name === 'c') {
+        cleanup();
+        process.exit(0);
+      }
+
+      if (key.name === 'up' && selected > 0) {
+        selected--;
+        rerender(items, selected, totalLines, newIdx);
+      } else if (key.name === 'down' && selected < items.length - 1) {
+        selected++;
+        rerender(items, selected, totalLines, newIdx);
+      } else if (key.name === 'return') {
+        cleanup();
+        console.log('');
+
+        if (selected === newIdx) {
+          resolve({ value: '', isNew: true });
+        } else {
+          const clean = options[selected].replace(/\s*\(.*\)$/, '');
+          resolve({ value: clean, isNew: false });
+        }
+      }
+    };
+
+    const cleanup = () => {
+      process.stdout.write('\x1b[?25h'); // show cursor
+      process.stdin.removeListener('keypress', onKeypress);
+      if (process.stdin.isTTY) process.stdin.setRawMode(false);
+      process.stdin.pause();
+    };
+
+    process.stdin.on('keypress', onKeypress);
   });
-  if (extra?.newLabel) {
-    console.log(`  ${DIM}${options.length + 1}.${RESET} ${CYAN}+ ${extra.newLabel}${RESET}`);
+}
+
+function formatItem(item: string, index: number, selected: number, newIdx: number): string {
+  const arrow = index === selected ? `${GREEN}❯${RESET}` : ' ';
+  let text: string;
+  if (index === selected) {
+    text = index === newIdx ? `${CYAN}${item}${RESET}` : `${CYAN}${BOLD}${item}${RESET}`;
+  } else {
+    text = `${DIM}${item}${RESET}`;
   }
-  console.log('');
+  return `  ${arrow} ${text}`;
+}
 
-  const input = await ask(`${DIM}Enter number${options.length > 0 ? ` (1-${options.length + (extra?.newLabel ? 1 : 0)})` : ''}:${RESET} `);
-  const idx = parseInt(input, 10) - 1;
-
-  if (idx >= 0 && idx < options.length) {
-    // Extract clean name (strip any metadata in parens)
-    const clean = options[idx].replace(/\s*\(.*\)$/, '');
-    return { value: clean, isNew: false };
+function renderItems(items: string[], selected: number, newIdx: number) {
+  for (let i = 0; i < items.length; i++) {
+    console.log(formatItem(items[i], i, selected, newIdx));
   }
+}
 
-  if (extra?.newLabel && (idx === options.length || isNaN(idx))) {
-    const name = isNaN(idx) && input ? input : await ask('Name: ');
-    return { value: name, isNew: true };
+function rerender(items: string[], selected: number, totalLines: number, newIdx: number) {
+  process.stdout.write(`\x1b[${totalLines}A`);
+  for (let i = 0; i < items.length; i++) {
+    process.stdout.write('\x1b[2K');
+    console.log(formatItem(items[i], i, selected, newIdx));
   }
-
-  // Treat raw text input as a name
-  if (input && isNaN(idx)) {
-    return { value: input, isNew: true };
-  }
-
-  throw new Error('Invalid selection');
 }
 
 /**
- * Show a role picker with numbered grid layout.
+ * Arrow-key navigable role picker.
  */
-export async function selectRole(): Promise<string> {
+export async function selectRole(defaultRole?: string): Promise<string> {
   const ROLES = ['backend', 'frontend', 'web', 'mobile', 'ios', 'android', 'infra', 'data', 'qa', 'design'];
+  const defaultIdx = defaultRole ? Math.max(0, ROLES.indexOf(defaultRole)) : 0;
 
-  heading('Select your role');
-  console.log('');
-
-  // Display in 2 columns
-  for (let i = 0; i < ROLES.length; i += 2) {
-    const left = `${DIM}${i + 1}.${RESET} ${ROLES[i]}`;
-    const right = i + 1 < ROLES.length ? `${DIM}${i + 2}.${RESET} ${ROLES[i + 1]}` : '';
-    console.log(`  ${left.padEnd(28)}${right}`);
-  }
-  console.log('');
-
-  const input = await ask(`${DIM}Enter number or name:${RESET} `);
-  const idx = parseInt(input, 10) - 1;
-
-  if (idx >= 0 && idx < ROLES.length) {
-    return ROLES[idx];
-  }
-
-  const normalized = input.toLowerCase().trim();
-  const match = ROLES.find(r => r === normalized);
-  if (match) return match;
-
-  throw new Error(`Invalid role "${input}". Must be one of: ${ROLES.join(', ')}`);
+  const { value } = await select('Select your role', ROLES, { defaultIndex: defaultIdx });
+  return value;
 }
 
 /**

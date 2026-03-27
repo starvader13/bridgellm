@@ -1,6 +1,6 @@
 {
   "name": "bridgellm",
-  "version": "0.1.8",
+  "version": "0.2.0",
   "description": "Let your AI coding agents talk to each other across services",
   "type": "module",
   "bin": {
@@ -48,7 +48,6 @@
     "README.md"
   ],
   "dependencies": {
-    "commander": "^13.0.0",
     "open": "^10.0.0"
   },
   "devDependencies": {

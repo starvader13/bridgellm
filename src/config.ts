@@ -39,7 +39,7 @@ export async function getToken(): Promise<string> {
   try {
     return (await readFile(join(BRIDGELLM_DIR, 'token'), 'utf-8')).trim();
   } catch {
-    throw new Error('Not logged in. Run `bridgellm login` first.');
+    throw new Error('Not logged in.');
   }
 }
 
@@ -112,7 +112,33 @@ export async function getMergedConfig(cwd: string): Promise<MergedConfig> {
   };
 }
 
-// ── Clean (local only) ──
+// ── Write .mcp.json ──
+
+export async function writeMcpJson(cwd: string): Promise<void> {
+  const config = await getMergedConfig(cwd);
+
+  if (!config.feature || !config.role) {
+    throw new Error('Feature and role are required to write .mcp.json');
+  }
+
+  const mcpConfig = {
+    mcpServers: {
+      bridgellm: {
+        type: 'http',
+        url: `${config.server}/mcp`,
+        headers: {
+          Authorization: `Bearer ${config.token}`,
+          'X-BridgeLLM-Feature': config.feature,
+          'X-BridgeLLM-Role': config.role,
+        },
+      },
+    },
+  };
+
+  await writeFile(join(cwd, '.mcp.json'), JSON.stringify(mcpConfig, null, 2) + '\n');
+}
+
+// ── Clean (project config only) ──
 
 async function tryUnlink(path: string): Promise<boolean> {
   try {
@@ -129,29 +155,6 @@ export async function clean(cwd: string): Promise<void> {
   if (await tryUnlink(join(cwd, '.mcp.json'))) removed.push('.mcp.json');
   if (await tryUnlink(join(cwd, '.bridgellm.yml'))) removed.push('.bridgellm.yml');
 
-  // Remove bridgellm block from CLAUDE.md
-  const claudePath = join(cwd, 'CLAUDE.md');
-  try {
-    const content = await readFile(claudePath, 'utf-8');
-    const START = '<!-- bridgellm:start -->';
-    const END = '<!-- bridgellm:end -->';
-    if (content.includes(START)) {
-      const regex = new RegExp(
-        `\\n?${START.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${END.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\n?`,
-      );
-      const cleaned = content.replace(regex, '\n').trim();
-      if (cleaned) {
-        await writeFile(claudePath, cleaned + '\n');
-        removed.push('CLAUDE.md (bridgellm block)');
-      } else {
-        await unlink(claudePath);
-        removed.push('CLAUDE.md');
-      }
-    }
-  } catch {
-    // no CLAUDE.md
-  }
-
   if (removed.length > 0) {
     console.log(`  Removed: ${removed.join(', ')}`);
   } else {
@@ -159,30 +162,11 @@ export async function clean(cwd: string): Promise<void> {
   }
 }
 
-// ── Reset (local + global) ──
+// ── Reset (local + global, offline-safe) ──
 
 export async function reset(cwd: string): Promise<void> {
-  // Revoke token on the server before deleting locally
-  try {
-    const token = await getToken();
-    const serverUrl = await getServerUrl();
-    const res = await fetch(`${serverUrl}/api/tokens`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      console.log('  Token revoked on server.');
-    } else {
-      console.log('  Could not revoke token on server (may already be expired).');
-    }
-  } catch {
-    console.log('  Could not reach server to revoke token. Continuing with local cleanup.');
-  }
-
-  // Clean local first
   await clean(cwd);
 
-  // Remove global config
   try {
     await rm(BRIDGELLM_DIR, { recursive: true, force: true });
     console.log('  Removed ~/.bridgellm/');
@@ -190,7 +174,7 @@ export async function reset(cwd: string): Promise<void> {
     // already gone
   }
 
-  console.log('  Reset complete. Run `bridgellm login` to start fresh.');
+  console.log('  Reset complete.');
 }
 
 function parseSimpleYaml(raw: string): Record<string, string> {
